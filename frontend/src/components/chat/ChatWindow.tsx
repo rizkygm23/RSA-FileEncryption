@@ -24,14 +24,27 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
     if (room) {
       loadMessages();
       
-      // Poll for new messages every 2 seconds
-      const interval = setInterval(() => {
-        loadMessages();
-      }, 2000);
+      // Menggunakan Supabase Realtime (WebSockets) agar tidak nyepam di Network Tab
+      const channel = supabase
+        .channel(`room_${room.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'messages_kriptografi',
+            filter: `room_id=eq.${room.id}`
+          },
+          () => {
+            // Jika ada perubahan di database, load ulang pesan
+            loadMessages();
+          }
+        )
+        .subscribe();
 
       // Cleanup on unmount or room change
       return () => {
-        clearInterval(interval);
+        supabase.removeChannel(channel);
       };
     } else {
       // Clear messages when no room selected
