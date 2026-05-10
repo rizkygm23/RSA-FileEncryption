@@ -18,7 +18,9 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isNearBottom, setIsNearBottom] = useState(true);
 
   useEffect(() => {
     if (room) {
@@ -52,9 +54,19 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
     }
   }, [room?.id]);
 
+  const handleScroll = () => {
+    if (!messagesContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    // Jika jarak ke bawah kurang dari 100px, anggap user sedang berada di paling bawah
+    setIsNearBottom(scrollHeight - scrollTop - clientHeight < 100);
+  };
+
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    // Hanya scroll otomatis ke bawah JIKA user sedang berada di posisi bawah
+    if (isNearBottom) {
+      scrollToBottom();
+    }
+  }, [messages, isNearBottom]);
 
   const loadMessages = async () => {
     if (!room) return;
@@ -252,7 +264,11 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
   return (
     <div className="flex-1 flex flex-col bg-zinc-900">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div 
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-6 space-y-4"
+      >
         {messages.map((message) => (
           <MessageBubble
             key={message.id}
