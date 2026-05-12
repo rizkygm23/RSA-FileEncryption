@@ -253,21 +253,21 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
 
   if (!room) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-zinc-900">
+      <div className="flex-1 flex items-center justify-center bg-slate-50">
         <div className="text-center">
-          <p className="text-zinc-400">Select a chat to start messaging</p>
+          <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Select a channel to begin</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-zinc-900">
-      {/* Messages */}
+    <div className="flex-1 flex flex-col bg-slate-50 relative">
+      {/* Messages Viewport */}
       <div 
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-6 space-y-4"
+        className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4"
       >
         {messages.map((message) => (
           <MessageBubble
@@ -281,17 +281,17 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="border-t border-zinc-800 p-4">
+      {/* Input Console */}
+      <div className="bg-white border-t border-slate-200 p-4 shrink-0">
         {selectedFile && (
-          <div className="mb-2 p-2 bg-zinc-800 rounded text-sm text-zinc-300 flex items-center justify-between">
-            <span className="truncate">{selectedFile.name}</span>
+          <div className="mb-2 p-2 bg-slate-100 border border-slate-200 rounded flex items-center justify-between">
+            <span className="text-xs font-mono text-slate-700 truncate">{selectedFile.name}</span>
             <button
               onClick={() => {
                 setSelectedFile(null);
                 if (fileInputRef.current) fileInputRef.current.value = '';
               }}
-              className="text-zinc-500 hover:text-white ml-2"
+              className="text-slate-400 hover:text-rose-600 ml-2"
             >
               ✕
             </button>
@@ -309,7 +309,7 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={sending}
-            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded transition disabled:opacity-50"
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-none transition-colors disabled:opacity-50 font-mono text-sm"
           >
             📎
           </button>
@@ -319,17 +319,17 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-            placeholder="Type a message..."
+            placeholder="TYPE COMMAND OR MESSAGE..."
             disabled={sending || !!selectedFile}
-            className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-4 py-2 text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-600 disabled:opacity-50"
+            className="flex-1 bg-white border border-slate-300 rounded-none px-4 py-2 text-slate-900 font-mono text-sm placeholder-slate-400 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-shadow disabled:opacity-50 disabled:bg-slate-50"
           />
 
           <button
             onClick={handleSend}
             disabled={sending || (!messageText.trim() && !selectedFile)}
-            className="px-6 py-2 bg-white hover:bg-zinc-100 disabled:bg-zinc-800 disabled:text-zinc-600 text-black font-medium rounded transition"
+            className="px-6 py-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 disabled:border-slate-200 text-white font-mono text-xs font-semibold uppercase tracking-wider rounded-none transition-colors border border-slate-900"
           >
-            {sending ? 'Sending...' : 'Send'}
+            {sending ? 'TX...' : 'TRANSMIT'}
           </button>
         </div>
       </div>

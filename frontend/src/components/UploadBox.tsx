@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { UploadCloud, File as FileIcon, CheckCircle2 } from 'lucide-react';
 
 interface UploadBoxProps {
   onFileSelect: (file: File) => void;
@@ -21,24 +22,31 @@ export default function UploadBox({ onFileSelect, label, selectedFile }: UploadB
   return (
     <div 
       {...getRootProps()} 
-      className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+      className={`border text-sm flex items-center justify-between p-3 transition-colors cursor-pointer ${
         isDragActive 
-          ? 'border-zinc-500 bg-zinc-800' 
-          : 'border-zinc-700 hover:border-zinc-600 bg-zinc-900/50'
+          ? 'border-indigo-500 bg-indigo-50/50' 
+          : 'border-slate-300 bg-white hover:border-slate-400'
       }`}
     >
       <input {...getInputProps()} />
-      {isDragActive ? (
-        <p className="text-zinc-300 text-sm">Drop the {label} here</p>
+      
+      {!selectedFile ? (
+        <div className="flex items-center gap-3 w-full">
+          <UploadCloud className={`w-4 h-4 shrink-0 ${isDragActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+          <span className={isDragActive ? 'text-indigo-700 font-medium' : 'text-slate-600'}>
+            {isDragActive ? `Drop ${label}...` : `Select or drop ${label}`}
+          </span>
+        </div>
       ) : (
-        <p className="text-zinc-400 text-sm">
-          Drag & drop {label} or <span className="text-white underline">browse</span>
-        </p>
-      )}
-      {selectedFile && (
-        <div className="mt-4 pt-4 border-t border-zinc-800">
-          <p className="text-zinc-500 text-xs mb-1">Selected file:</p>
-          <p className="text-white text-sm font-medium truncate">{selectedFile.name}</p>
+        <div className="flex items-center justify-between w-full gap-3">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider leading-none mb-1">{label}</span>
+              <span className="font-mono text-slate-800 truncate leading-none">{selectedFile.name}</span>
+            </div>
+          </div>
+          <span className="text-[10px] uppercase font-semibold text-slate-400 hover:text-slate-600 shrink-0">Change</span>
         </div>
       )}
     </div>

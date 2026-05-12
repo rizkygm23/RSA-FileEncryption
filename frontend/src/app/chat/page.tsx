@@ -136,14 +136,17 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-zinc-400">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-slate-500 font-mono text-xs uppercase tracking-widest flex items-center gap-2">
+          <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-800 rounded-full animate-spin"></div>
+          INITIALIZING...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col bg-slate-50">
       <div className="flex-1 flex overflow-hidden">
         <ChatSidebar
           currentUser={currentUser!}
