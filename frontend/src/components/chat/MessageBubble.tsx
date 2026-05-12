@@ -112,8 +112,8 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
   const isPDF = message.file_name?.match(/\.pdf$/i);
 
   return (
-    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-3`}>
-      <div className={`max-w-md ${isOwnMessage ? 'bg-indigo-50 border-indigo-100' : 'bg-white border-slate-200'} shadow-sm rounded-none overflow-hidden border`}>
+    <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-3 px-2 sm:px-0`}>
+      <div className={`max-w-[85%] sm:max-w-md lg:max-w-lg ${isOwnMessage ? 'bg-indigo-50 border-indigo-100' : 'bg-white border-slate-200'} shadow-sm rounded-none overflow-hidden border`}>
         {!isOwnMessage && (
           <div className="px-3 pt-2 pb-1">
             <div className="text-[10px] uppercase font-mono tracking-widest text-slate-500 font-semibold">{sender?.display_name}</div>
@@ -187,7 +187,7 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
                   <button
                     onClick={handleOpenFile}
                     disabled={isOpening || isDownloading || showPreview}
-                    className="flex-1 flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 text-white disabled:text-slate-400 text-[10px] uppercase tracking-widest font-mono font-semibold py-2 px-3 transition-colors rounded-none"
+                    className="flex-1 touch-target flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 text-white disabled:text-slate-400 text-[10px] sm:text-xs uppercase tracking-widest font-mono font-semibold py-2.5 sm:py-2 px-3 transition-colors rounded-none"
                   >
                     {isOpening ? (
                       <>
@@ -215,7 +215,7 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
                 <button
                   onClick={handleDownload}
                   disabled={isOpening || isDownloading}
-                  className="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 disabled:bg-slate-50 text-slate-800 disabled:text-slate-400 border border-slate-300 text-[10px] uppercase tracking-widest font-mono font-semibold py-2 px-3 transition-colors rounded-none"
+                  className="flex-1 touch-target flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 disabled:bg-slate-50 text-slate-800 disabled:text-slate-400 border border-slate-300 text-[10px] sm:text-xs uppercase tracking-widest font-mono font-semibold py-2.5 sm:py-2 px-3 transition-colors rounded-none"
                 >
                   {isDownloading ? (
                     <>

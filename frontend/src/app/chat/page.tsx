@@ -144,33 +144,38 @@ export default function ChatPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-slate-500 font-mono text-xs uppercase tracking-widest flex items-center gap-2">
-          <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-800 rounded-full animate-spin"></div>
-          INITIALIZING...
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 relative">
+            <div className="absolute inset-0 border-4 border-slate-200 rounded-full" />
+            <div className="absolute inset-0 border-4 border-slate-900 rounded-full border-t-transparent animate-spin" />
+          </div>
+          <p className="text-sm font-medium text-slate-900 mb-1">Loading CipherVault</p>
+          <p className="text-xs text-slate-500">Initializing secure connection...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50">
+    <div className="fixed inset-0 flex flex-col bg-slate-50" style={{ top: '64px' }}>
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+      <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0">
         <button
           onClick={() => setShowSidebar(!showSidebar)}
-          className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          className="touch-target p-2 hover:bg-slate-100 rounded-lg transition-colors -ml-2"
+          aria-label="Toggle menu"
         >
           <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <span className="font-semibold text-slate-900">
+        <span className="font-semibold text-slate-900 text-sm sm:text-base">
           {selectedRoom ? 'Chat' : 'Select Channel'}
         </span>
         <div className="w-10"></div> {/* Spacer for centering */}
       </div>
 
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 flex overflow-hidden relative min-h-0">
         {/* Sidebar - Desktop: always visible, Mobile: overlay */}
         <div className={`
           ${showSidebar ? 'translate-x-0' : '-translate-x-full'}
@@ -178,9 +183,8 @@ export default function ChatPage() {
           fixed lg:relative
           inset-y-0 left-0
           z-40
-          w-80
+          w-full sm:w-80 lg:w-72
           transition-transform duration-300 ease-in-out
-          lg:block
         `}>
           <ChatSidebar
             currentUser={currentUser!}

@@ -16,6 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CipherVault v3 - Secure File Communication",
   description: "RSA Encryption and Digital Signature Platform",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+  },
 };
 
 export default function RootLayout({
@@ -30,9 +35,7 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-slate-50 text-slate-900">
         <Navbar />
-        <main className="flex-1 max-w-7xl mx-auto w-full">
-          {children}
-        </main>
+        {children}
       </body>
     </html>
   );
