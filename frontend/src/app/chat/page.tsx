@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/store/userStore';
-import { supabase, User, ChatRoom, Message } from '@/lib/supabase';
+import { supabase, User, ChatRoom } from '@/lib/supabase';
 import ChatSidebar from '@/components/chat/ChatSidebar';
 import ChatWindow from '@/components/chat/ChatWindow';
 import NewChatModal from '@/components/chat/NewChatModal';
+import { Menu } from 'lucide-react';
 
 export default function ChatPage() {
   const router = useRouter();
@@ -20,56 +21,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
 
-  useEffect(() => {
-    if (!currentUser) {
-      router.push('/login');
-      return;
-    }
-
-    loadData();
-    
-    // Subscribe to rooms
-    const channel = supabase
-      .channel('room-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chat_rooms_kriptografi',
-        },
-        () => {
-          loadRooms();
-        }
-      )
-      .subscribe();
-
-    // Cleanup on unmount
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentUser, router]);
-
-  const loadData = async () => {
-    try {
-      // Load all users
-      const { data: usersData } = await supabase
-        .from('users_kriptografi')
-        .select('*')
-        .order('username');
-      
-      if (usersData) setUsers(usersData);
-
-      // Load user's rooms
-      await loadRooms();
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadRooms = async () => {
+  const loadRooms = useCallback(async () => {
     if (!currentUser) return;
 
     const { data: memberData } = await supabase
@@ -86,8 +38,55 @@ export default function ChatPage() {
         .order('updated_at', { ascending: false });
 
       if (roomsData) setRooms(roomsData);
+    } else {
+      setRooms([]);
     }
-  };
+  }, [currentUser]);
+
+  const loadData = useCallback(async () => {
+    try {
+      const { data: usersData } = await supabase
+        .from('users_kriptografi')
+        .select('*')
+        .order('username');
+      
+      if (usersData) setUsers(usersData);
+      await loadRooms();
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadRooms]);
+
+  useEffect(() => {
+    if (!currentUser) {
+      router.push('/login');
+      return;
+    }
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadData();
+    
+    const channel = supabase
+      .channel('room-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_rooms_kriptografi',
+        },
+        () => {
+          loadRooms();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser, loadData, loadRooms, router]);
 
   const handleLogout = () => {
     logout();
@@ -143,40 +142,36 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-[#f3f3f3]">
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 relative">
-            <div className="absolute inset-0 border-4 border-slate-200 rounded-full" />
-            <div className="absolute inset-0 border-4 border-slate-900 rounded-full border-t-transparent animate-spin" />
+          <div className="relative mx-auto mb-4 h-12 w-12">
+            <div className="absolute inset-0 rounded-full border-4 border-[#e2e2e2]" />
+            <div className="absolute inset-0 animate-spin rounded-full border-4 border-black border-t-transparent" />
           </div>
-          <p className="text-sm font-medium text-slate-900 mb-1">Loading CipherVault</p>
-          <p className="text-xs text-slate-500">Initializing secure connection...</p>
+          <p className="mb-1 text-sm font-medium text-black">Loading CipherVault</p>
+          <p className="text-xs text-[#5e5e5e]">Initializing secure connection...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-slate-50" style={{ top: '64px' }}>
-      {/* Mobile Header */}
-      <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0">
+    <div className="fixed inset-x-0 bottom-0 flex flex-col bg-[#f3f3f3]" style={{ top: '64px' }}>
+      <div className="flex shrink-0 items-center justify-between border-b border-[#e2e2e2] bg-white px-4 py-3 lg:hidden">
         <button
           onClick={() => setShowSidebar(!showSidebar)}
-          className="touch-target p-2 hover:bg-slate-100 rounded-lg transition-colors -ml-2"
+          className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-black transition-colors hover:bg-[#efefef]"
           aria-label="Toggle menu"
         >
-          <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+          <Menu className="h-5 w-5" />
         </button>
-        <span className="font-semibold text-slate-900 text-sm sm:text-base">
+        <span className="text-sm font-semibold text-black sm:text-base">
           {selectedRoom ? 'Chat' : 'Select Channel'}
         </span>
-        <div className="w-10"></div> {/* Spacer for centering */}
+        <div className="w-10" />
       </div>
 
       <div className="flex-1 flex overflow-hidden relative min-h-0">
-        {/* Sidebar - Desktop: always visible, Mobile: overlay */}
         <div className={`
           ${showSidebar ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0
@@ -197,15 +192,13 @@ export default function ChatPage() {
           />
         </div>
 
-        {/* Overlay for mobile */}
         {showSidebar && (
           <div
-            className="lg:hidden fixed inset-0 bg-black/20 z-30"
+            className="fixed inset-0 z-30 bg-black/20 lg:hidden"
             onClick={() => setShowSidebar(false)}
           />
         )}
         
-        {/* Chat Window */}
         <div className="flex-1 flex flex-col">
           <ChatWindow
             currentUser={currentUser!}

@@ -63,40 +63,40 @@ export default function DecryptOp() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="border-b border-slate-200 pb-4">
-        <h2 className="text-sm font-bold text-slate-900 tracking-tight uppercase">Decrypt Payload</h2>
-        <p className="text-xs text-slate-500 mt-1">Restore an encrypted file utilizing the corresponding private key.</p>
+      <div className="border-b border-[#e2e2e2] pb-5">
+        <h2 className="text-2xl font-bold leading-8 text-black">Decrypt payload</h2>
+        <p className="mt-1 text-sm text-[#5e5e5e]">Restore an encrypted file utilizing the corresponding private key.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-            Encrypted Source
+          <label className="mb-2 block text-sm font-medium text-[#5e5e5e]">
+            Encrypted source
           </label>
           <UploadBox onFileSelect={setFile} label="File (.encrypted)" selectedFile={file} />
         </div>
 
         <div>
-          <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-            Private Key
+          <label className="mb-2 block text-sm font-medium text-[#5e5e5e]">
+            Private key
           </label>
           <UploadBox onFileSelect={setKeyFile} label="Private Key (.txt)" selectedFile={keyFile} />
         </div>
       </div>
 
       {error && (
-        <div className="text-rose-700 text-xs font-mono bg-rose-50 p-3 border border-rose-200 flex items-center">
-          <span className="font-bold mr-2">ERR:</span> {error}
+        <div className="flex items-center rounded-2xl border border-black bg-[#efefef] p-4 text-sm text-black">
+          <span className="mr-2 font-bold">Error:</span> {error}
         </div>
       )}
 
       <button 
         onClick={handleDecrypt}
         disabled={loading || !file || !keyFile}
-        className="w-full group flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 text-white font-mono text-sm font-semibold py-3 px-4 transition-colors border border-slate-900 disabled:border-slate-200"
+        className="group flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-black bg-black px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#282828] disabled:border-[#e2e2e2] disabled:bg-[#efefef] disabled:text-[#afafaf]"
       >
-        <Unlock className="w-4 h-4 group-disabled:opacity-50" />
-        {loading ? 'PROCESSING...' : 'EXECUTE DECRYPTION'}
+        <Unlock className="h-4 w-4 group-disabled:opacity-50" />
+        {loading ? 'Processing...' : 'Execute decryption'}
       </button>
       
       <ProcessLogs logs={processLogs} isComplete={isProcessComplete} />

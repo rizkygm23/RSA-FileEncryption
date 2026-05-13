@@ -1,22 +1,26 @@
+import { CheckCircle2, XCircle } from 'lucide-react';
+
 interface ResultCardProps {
   isValid: boolean;
   message: string;
 }
 
 export default function ResultCard({ isValid, message }: ResultCardProps) {
+  const Icon = isValid ? CheckCircle2 : XCircle;
+
   return (
-    <div className={`mt-4 p-4 border ${
+    <div className={`mt-4 rounded-2xl border p-5 ${
       isValid 
-        ? 'bg-emerald-50/50 border-emerald-200' 
-        : 'bg-rose-50/50 border-rose-200'
+        ? 'border-black bg-black text-white' 
+        : 'border-[#e2e2e2] bg-[#efefef] text-black'
     }`}>
       <div className="flex items-start gap-3">
-        <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${isValid ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+        <Icon className="mt-0.5 h-5 w-5 shrink-0" />
         <div>
-          <h3 className={`text-xs font-mono uppercase tracking-wider font-semibold mb-1 ${isValid ? 'text-emerald-700' : 'text-rose-700'}`}>
-            {isValid ? 'VALID_SIGNATURE' : 'INVALID_SIGNATURE'}
+          <h3 className="mb-1 text-base font-bold">
+            {isValid ? 'Signature valid' : 'Signature invalid'}
           </h3>
-          <p className="text-slate-700 text-sm">{message}</p>
+          <p className={`text-sm ${isValid ? 'text-[#efefef]' : 'text-[#5e5e5e]'}`}>{message}</p>
         </div>
       </div>
     </div>

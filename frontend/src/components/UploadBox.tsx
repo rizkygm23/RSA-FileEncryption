@@ -22,31 +22,36 @@ export default function UploadBox({ onFileSelect, label, selectedFile }: UploadB
   return (
     <div 
       {...getRootProps()} 
-      className={`border text-sm flex items-center justify-between p-3 transition-colors cursor-pointer ${
+      className={`flex min-h-[92px] cursor-pointer items-center justify-between rounded-2xl border p-4 text-sm transition-colors ${
         isDragActive 
-          ? 'border-indigo-500 bg-indigo-50/50' 
-          : 'border-slate-300 bg-white hover:border-slate-400'
+          ? 'border-black bg-white' 
+          : 'border-[#e2e2e2] bg-[#efefef] hover:bg-[#e2e2e2]'
       }`}
     >
       <input {...getInputProps()} />
       
       {!selectedFile ? (
         <div className="flex items-center gap-3 w-full">
-          <UploadCloud className={`w-4 h-4 shrink-0 ${isDragActive ? 'text-indigo-600' : 'text-slate-400'}`} />
-          <span className={isDragActive ? 'text-indigo-700 font-medium' : 'text-slate-600'}>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-black">
+            <UploadCloud className="h-4 w-4" />
+          </span>
+          <span className={isDragActive ? 'font-medium text-black' : 'text-[#5e5e5e]'}>
             {isDragActive ? `Drop ${label}...` : `Select or drop ${label}`}
           </span>
         </div>
       ) : (
         <div className="flex items-center justify-between w-full gap-3">
           <div className="flex items-center gap-3 overflow-hidden">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-black">
+              <FileIcon className="h-4 w-4" />
+              <CheckCircle2 className="absolute -right-1 -top-1 h-4 w-4 fill-white text-black" />
+            </span>
             <div className="flex flex-col overflow-hidden">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider leading-none mb-1">{label}</span>
-              <span className="font-mono text-slate-800 truncate leading-none">{selectedFile.name}</span>
+              <span className="mb-1 text-xs font-medium leading-none text-[#5e5e5e]">{label}</span>
+              <span className="truncate text-sm font-medium leading-5 text-black">{selectedFile.name}</span>
             </div>
           </div>
-          <span className="text-[10px] uppercase font-semibold text-slate-400 hover:text-slate-600 shrink-0">Change</span>
+          <span className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-black">Change</span>
         </div>
       )}
     </div>

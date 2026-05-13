@@ -92,50 +92,50 @@ export default function EncryptOp() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-4">
+      <div className="flex flex-col items-start justify-between gap-4 border-b border-[#e2e2e2] pb-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-sm font-bold text-slate-900 tracking-tight uppercase">Encrypt Target</h2>
-          <p className="text-xs text-slate-500 mt-1">Apply RSA encryption using a designated public key.</p>
+          <h2 className="text-2xl font-bold leading-8 text-black">Encrypt target</h2>
+          <p className="mt-1 text-sm text-[#5e5e5e]">Apply RSA encryption using a designated public key.</p>
         </div>
         <button 
           onClick={handleGenerateKeys}
           disabled={loading}
-          className="flex items-center gap-2 text-xs bg-white text-slate-700 font-semibold py-1.5 px-3 border border-slate-300 hover:bg-slate-50 hover:text-indigo-600 transition-colors disabled:opacity-50"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#efefef] px-4 text-sm font-medium text-black transition-colors hover:bg-[#e2e2e2] disabled:opacity-50"
         >
-          <KeyRound className="w-3.5 h-3.5" />
-          GENERATE KEY PAIR
+          <KeyRound className="h-4 w-4" />
+          Generate key pair
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-            Target File
+          <label className="mb-2 block text-sm font-medium text-[#5e5e5e]">
+            Target file
           </label>
           <UploadBox onFileSelect={setFile} label="File" selectedFile={file} />
         </div>
 
         <div>
-          <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-            Public Key
+          <label className="mb-2 block text-sm font-medium text-[#5e5e5e]">
+            Public key
           </label>
           <UploadBox onFileSelect={setKeyFile} label="Public Key (.txt)" selectedFile={keyFile} />
         </div>
       </div>
 
       {error && (
-        <div className="text-rose-700 text-xs font-mono bg-rose-50 p-3 border border-rose-200 flex items-center">
-          <span className="font-bold mr-2">ERR:</span> {error}
+        <div className="flex items-center rounded-2xl border border-black bg-[#efefef] p-4 text-sm text-black">
+          <span className="mr-2 font-bold">Error:</span> {error}
         </div>
       )}
 
       <button 
         onClick={handleEncrypt}
         disabled={loading || !file || !keyFile}
-        className="w-full group flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 text-white font-mono text-sm font-semibold py-3 px-4 transition-colors border border-slate-900 disabled:border-slate-200"
+        className="group flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-black bg-black px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#282828] disabled:border-[#e2e2e2] disabled:bg-[#efefef] disabled:text-[#afafaf]"
       >
-        <DownloadCloud className="w-4 h-4 group-disabled:opacity-50" />
-        {loading ? 'PROCESSING...' : 'EXECUTE ENCRYPTION'}
+        <DownloadCloud className="h-4 w-4 group-disabled:opacity-50" />
+        {loading ? 'Processing...' : 'Execute encryption'}
       </button>
       
       <ProcessLogs logs={processLogs} isComplete={isProcessComplete} />

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { User, Message, ChatRoom } from '@/lib/supabase';
 import { decryptFile, decryptChatText } from '@/services/api';
+import { Check, Download, Eye, FileImage, FileText, Loader2, Paperclip } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: Message;
@@ -23,25 +24,48 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
 
   // Auto-decrypt text messages
   useEffect(() => {
-    if (message.message_type === 'text' && !decryptedContent && !isOpening) {
-      handleDecryptText();
-    }
-  }, [message.id]);
+    let isMounted = true;
 
-  const handleDecryptText = async () => {
-    try {
-      setIsOpening(true);
-      const decryptedText = await decryptChatText(
-        message.encrypted_content,
-        room.private_key
-      );
-      setDecryptedContent(decryptedText);
-    } catch (error: any) {
-      console.error('Decryption error:', error);
-      setDecryptedContent(`Error: ${error.message || 'Failed to decrypt'}`);
-    } finally {
-      setIsOpening(false);
+    const decryptText = async () => {
+      if (message.message_type !== 'text' || decryptedContent || isOpening) return;
+
+      try {
+        setIsOpening(true);
+        const decryptedText = await decryptChatText(
+          message.encrypted_content,
+          room.private_key
+        );
+        if (isMounted) setDecryptedContent(decryptedText);
+      } catch (error: unknown) {
+        console.error('Decryption error:', error);
+        const messageText = error instanceof Error ? error.message : 'Failed to decrypt';
+        if (isMounted) setDecryptedContent(`Error: ${messageText}`);
+      } finally {
+        if (isMounted) setIsOpening(false);
+      }
+    };
+
+    decryptText();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [decryptedContent, isOpening, message.encrypted_content, message.message_type, message.id, room.private_key]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        window.URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const getErrorMessage = (error: unknown) => {
+    if (error instanceof Error) {
+      return error.message;
     }
+
+    return 'Unexpected error';
   };
 
   const decryptFileData = async () => {
@@ -78,9 +102,9 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
       const url = window.URL.createObjectURL(decryptedBlob);
       setPreviewUrl(url);
       setShowPreview(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Open error:', error);
-      alert(`Failed to open: ${error.message}`);
+      alert(`Failed to open: ${getErrorMessage(error)}`);
     } finally {
       setIsOpening(false);
     }
@@ -100,37 +124,42 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Download error:', error);
-      alert(`Failed to download: ${error.message}`);
+      alert(`Failed to download: ${getErrorMessage(error)}`);
     } finally {
       setIsDownloading(false);
     }
   };
 
-  const isImage = message.file_name?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
-  const isPDF = message.file_name?.match(/\.pdf$/i);
+  const fileName = message.file_name ?? 'Encrypted file';
+  const fileSize = message.file_size ?? 0;
+  const isImage = fileName.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+  const isPDF = fileName.match(/\.pdf$/i);
+  const FileIcon = isImage ? FileImage : isPDF ? FileText : Paperclip;
 
   return (
     <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-3 px-2 sm:px-0`}>
-      <div className={`max-w-[85%] sm:max-w-md lg:max-w-lg ${isOwnMessage ? 'bg-indigo-50 border-indigo-100' : 'bg-white border-slate-200'} shadow-sm rounded-none overflow-hidden border`}>
+      <div className={`max-w-[85%] overflow-hidden rounded-2xl border sm:max-w-md lg:max-w-lg ${
+        isOwnMessage ? 'border-black bg-black text-white' : 'border-[#e2e2e2] bg-white text-black'
+      }`}>
         {!isOwnMessage && (
           <div className="px-3 pt-2 pb-1">
-            <div className="text-[10px] uppercase font-mono tracking-widest text-slate-500 font-semibold">{sender?.display_name}</div>
+            <div className="text-xs font-medium text-[#5e5e5e]">{sender?.display_name}</div>
           </div>
         )}
         
         {message.message_type === 'text' ? (
           <div className="px-3 py-2">
             {isOpening ? (
-              <div className="flex items-center gap-2 text-slate-500 text-xs font-mono uppercase">
-                <div className="w-3 h-3 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin"></div>
+              <div className={`flex items-center gap-2 text-xs ${isOwnMessage ? 'text-[#efefef]' : 'text-[#5e5e5e]'}`}>
+                <Loader2 className="h-3 w-3 animate-spin" />
                 <span>Decrypting...</span>
               </div>
             ) : decryptedContent ? (
-              <p className="text-slate-900 text-sm whitespace-pre-wrap break-words">{decryptedContent}</p>
+              <p className={`whitespace-pre-wrap break-words text-sm ${isOwnMessage ? 'text-white' : 'text-black'}`}>{decryptedContent}</p>
             ) : (
-              <p className="text-rose-500 text-xs font-mono uppercase">Failed to decrypt</p>
+              <p className={`text-xs font-medium ${isOwnMessage ? 'text-[#efefef]' : 'text-black'}`}>Failed to decrypt</p>
             )}
           </div>
         ) : (
@@ -139,17 +168,18 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
             {showPreview && previewUrl && (
               <div className="relative">
                 {isImage && (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img 
                     src={previewUrl} 
-                    alt={message.file_name}
-                    className="w-full max-h-96 object-contain bg-slate-100"
+                    alt={fileName}
+                    className="w-full max-h-96 object-contain bg-[#efefef]"
                   />
                 )}
                 {isPDF && (
                   <iframe 
                     src={previewUrl}
                     className="w-full h-96 bg-white"
-                    title={message.file_name}
+                    title={fileName}
                   />
                 )}
               </div>
@@ -158,25 +188,15 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
             {/* File Info */}
             <div className="px-3 py-3 space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-slate-100 border border-slate-200 rounded-none flex items-center justify-center flex-shrink-0">
-                  {isImage ? (
-                    <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  ) : isPDF ? (
-                    <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                    </svg>
-                  )}
+                <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${
+                  isOwnMessage ? 'bg-white text-black' : 'bg-[#efefef] text-[#5e5e5e]'
+                }`}>
+                  <FileIcon className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-slate-900 text-sm font-semibold truncate">{message.file_name}</div>
-                  <div className="text-slate-500 text-xs font-mono uppercase tracking-wider">
-                    {(message.file_size! / 1024).toFixed(1)} KB
+                  <div className={`truncate text-sm font-semibold ${isOwnMessage ? 'text-white' : 'text-black'}`}>{fileName}</div>
+                  <div className={`text-xs ${isOwnMessage ? 'text-[#afafaf]' : 'text-[#5e5e5e]'}`}>
+                    {(fileSize / 1024).toFixed(1)} KB
                   </div>
                 </div>
               </div>
@@ -187,27 +207,24 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
                   <button
                     onClick={handleOpenFile}
                     disabled={isOpening || isDownloading || showPreview}
-                    className="flex-1 touch-target flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 text-white disabled:text-slate-400 text-[10px] sm:text-xs uppercase tracking-widest font-mono font-semibold py-2.5 sm:py-2 px-3 transition-colors rounded-none"
+                    className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50 ${
+                      isOwnMessage ? 'bg-white text-black hover:bg-[#efefef]' : 'bg-black text-white hover:bg-[#282828]'
+                    }`}
                   >
                     {isOpening ? (
                       <>
-                        <div className="w-3 h-3 border-2 border-slate-500 border-t-white rounded-full animate-spin"></div>
-                        <span>OPENING...</span>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>Opening...</span>
                       </>
                     ) : showPreview ? (
                       <>
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span>OPENED</span>
+                        <Check className="h-3 w-3" />
+                        <span>Opened</span>
                       </>
                     ) : (
                       <>
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        <span>PREVIEW</span>
+                        <Eye className="h-3 w-3" />
+                        <span>Preview</span>
                       </>
                     )}
                   </button>
@@ -215,19 +232,21 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
                 <button
                   onClick={handleDownload}
                   disabled={isOpening || isDownloading}
-                  className="flex-1 touch-target flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 disabled:bg-slate-50 text-slate-800 disabled:text-slate-400 border border-slate-300 text-[10px] sm:text-xs uppercase tracking-widest font-mono font-semibold py-2.5 sm:py-2 px-3 transition-colors rounded-none"
+                  className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full border px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50 ${
+                    isOwnMessage
+                      ? 'border-white bg-black text-white hover:bg-[#282828]'
+                      : 'border-[#e2e2e2] bg-[#efefef] text-black hover:bg-[#e2e2e2]'
+                  }`}
                 >
                   {isDownloading ? (
                     <>
-                      <div className="w-3 h-3 border-2 border-slate-300 border-t-slate-700 rounded-full animate-spin"></div>
-                      <span>DL...</span>
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span>Downloading...</span>
                     </>
                   ) : (
                     <>
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      <span>DOWNLOAD</span>
+                      <Download className="h-3 w-3" />
+                      <span>Download</span>
                     </>
                   )}
                 </button>
@@ -237,8 +256,8 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
         )}
 
         {/* Timestamp */}
-        <div className="px-3 pb-2 pt-1 border-t border-black/5">
-          <div className="text-[10px] font-mono text-slate-400">
+        <div className={`border-t px-3 pb-2 pt-1 ${isOwnMessage ? 'border-white/10' : 'border-black/5'}`}>
+          <div className={`text-xs ${isOwnMessage ? 'text-[#afafaf]' : 'text-[#5e5e5e]'}`}>
             {new Date(message.created_at).toLocaleTimeString([], { 
               hour: '2-digit', 
               minute: '2-digit' 

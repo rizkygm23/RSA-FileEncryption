@@ -55,32 +55,27 @@ export default function LoginPage() {
         setCurrentUser(newUser);
         router.push('/chat');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      setError(err.message || 'Failed to login. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to login. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 bg-slate-50">
+    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-[#f3f3f3] px-4 py-10 sm:px-6">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-900 rounded-xl mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome to CipherVault</h1>
-          <p className="text-slate-600">Enter your name to start secure messaging</p>
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-4xl font-bold leading-[44px] text-black">Welcome to CipherVault</h1>
+          <p className="text-base text-[#5e5e5e]">Enter your name to start secure messaging</p>
         </div>
 
-        <div className="bg-white border border-slate-200 shadow-sm p-8 rounded-xl">
+        <div className="rounded-2xl bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.16)] sm:p-8">
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-2">
-                Your Name
+              <label htmlFor="username" className="mb-2 block text-sm font-medium text-[#5e5e5e]">
+                Your name
               </label>
               <input
                 type="text"
@@ -88,14 +83,14 @@ export default function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="e.g., rizky, aul, irul, cipa, abi"
-                className="w-full bg-white border border-slate-300 rounded-lg px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500"
+                className="input"
                 disabled={loading}
                 autoFocus
               />
             </div>
 
             {error && (
-              <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-200">
+              <div className="rounded-2xl border border-black bg-[#efefef] p-4 text-sm text-black">
                 {error}
               </div>
             )}
@@ -103,14 +98,14 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:text-slate-500 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+              className="flex min-h-12 w-full items-center justify-center rounded-full bg-black px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#282828] disabled:bg-[#efefef] disabled:text-[#afafaf]"
             >
               {loading ? 'Loading...' : 'Continue'}
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-slate-200">
-            <p className="text-xs text-slate-500 text-center">
+          <div className="mt-6 border-t border-[#e2e2e2] pt-6">
+            <p className="text-center text-xs text-[#5e5e5e]">
               Each chat room will have its own RSA key pair for secure group messaging
             </p>
           </div>

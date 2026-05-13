@@ -63,28 +63,28 @@ export default function VerifyOp() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="border-b border-slate-200 pb-4">
-        <h2 className="text-sm font-bold text-slate-900 tracking-tight uppercase">Verify Signature</h2>
-        <p className="text-xs text-slate-500 mt-1">Verify payload integrity and authenticity using the provided public key and signature.</p>
+      <div className="border-b border-[#e2e2e2] pb-5">
+        <h2 className="text-2xl font-bold leading-8 text-black">Verify signature</h2>
+        <p className="mt-1 text-sm text-[#5e5e5e]">Verify payload integrity and authenticity using the provided public key and signature.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-            Original Payload
+          <label className="mb-2 block text-sm font-medium text-[#5e5e5e]">
+            Original payload
           </label>
           <UploadBox onFileSelect={setFile} label="File" selectedFile={file} />
         </div>
 
         <div>
-          <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-            Public Key
+          <label className="mb-2 block text-sm font-medium text-[#5e5e5e]">
+            Public key
           </label>
           <UploadBox onFileSelect={setKeyFile} label="Public Key (.txt)" selectedFile={keyFile} />
         </div>
 
         <div>
-          <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+          <label className="mb-2 block text-sm font-medium text-[#5e5e5e]">
             Signature
           </label>
           <UploadBox onFileSelect={setSignatureFile} label="Signature (.txt)" selectedFile={signatureFile} />
@@ -92,18 +92,18 @@ export default function VerifyOp() {
       </div>
 
       {error && (
-        <div className="text-rose-700 text-xs font-mono bg-rose-50 p-3 border border-rose-200 flex items-center">
-          <span className="font-bold mr-2">ERR:</span> {error}
+        <div className="flex items-center rounded-2xl border border-black bg-[#efefef] p-4 text-sm text-black">
+          <span className="mr-2 font-bold">Error:</span> {error}
         </div>
       )}
 
       <button 
         onClick={handleVerify}
         disabled={loading || !file || !keyFile || !signatureFile}
-        className="w-full group flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-100 disabled:text-slate-400 text-white font-mono text-sm font-semibold py-3 px-4 transition-colors border border-slate-900 disabled:border-slate-200"
+        className="group flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-black bg-black px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#282828] disabled:border-[#e2e2e2] disabled:bg-[#efefef] disabled:text-[#afafaf]"
       >
-        <FileCheck className="w-4 h-4 group-disabled:opacity-50" />
-        {loading ? 'PROCESSING...' : 'EXECUTE VERIFICATION'}
+        <FileCheck className="h-4 w-4 group-disabled:opacity-50" />
+        {loading ? 'Processing...' : 'Execute verification'}
       </button>
       
       <ProcessLogs logs={processLogs} isComplete={isProcessComplete} />
