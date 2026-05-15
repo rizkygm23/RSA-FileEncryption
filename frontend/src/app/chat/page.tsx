@@ -148,8 +148,8 @@ export default function ChatPage() {
             <div className="absolute inset-0 rounded-full border-4 border-[#e2e2e2]" />
             <div className="absolute inset-0 animate-spin rounded-full border-4 border-black border-t-transparent" />
           </div>
-          <p className="mb-1 text-sm font-medium text-black">Loading CipherVault</p>
-          <p className="text-xs text-[#5e5e5e]">Initializing secure connection...</p>
+          <p className="mb-1 text-sm font-medium text-black">Loading chat</p>
+          <p className="text-xs text-[#5e5e5e]">Getting your rooms...</p>
         </div>
       </div>
     );
@@ -166,7 +166,7 @@ export default function ChatPage() {
           <Menu className="h-5 w-5" />
         </button>
         <span className="text-sm font-semibold text-black sm:text-base">
-          {selectedRoom ? 'Chat' : 'Select Channel'}
+          {selectedRoom ? 'Chat' : 'Choose a chat'}
         </span>
         <div className="w-10" />
       </div>

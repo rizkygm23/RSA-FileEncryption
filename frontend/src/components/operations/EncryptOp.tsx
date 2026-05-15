@@ -49,7 +49,7 @@ export default function EncryptOp() {
 
   const handleEncrypt = async () => {
     if (!file || !keyFile) {
-      setError('Missing required files.');
+      setError('Choose a file and a public key first.');
       return;
     }
     
@@ -59,19 +59,19 @@ export default function EncryptOp() {
       setIsProcessComplete(false);
       setProcessLogs([]);
       
-      setProcessLogs(['[SYS] Reading target file and extracting bytes...']);
+      setProcessLogs(['Reading the selected file...']);
       await delay(800);
       
-      setProcessLogs(prev => [...prev, '[KEY] Reading Public Key (n, e) from file...']);
+      setProcessLogs(prev => [...prev, 'Reading the public key...']);
       await delay(800);
       
-      setProcessLogs(prev => [...prev, '[RSA] Executing Formula: C = (M ^ e) mod n...']);
+      setProcessLogs(prev => [...prev, 'Encrypting the file with RSA...']);
       await delay(1000);
       
-      setProcessLogs(prev => [...prev, '[NET] Processing data chunks on secure server...']);
+      setProcessLogs(prev => [...prev, 'Sending the file to the backend...']);
       const encryptedBlob = await encryptFile(file, keyFile);
       
-      setProcessLogs(prev => [...prev, '[SYS] Encryption successful. Generating .encrypted artifact...']);
+      setProcessLogs(prev => [...prev, 'Encryption finished. Downloading the .encrypted file...']);
       setIsProcessComplete(true);
       
       const url = window.URL.createObjectURL(new Blob([encryptedBlob]));
@@ -83,7 +83,7 @@ export default function EncryptOp() {
       link.remove();
     } catch (err) {
       console.error(err);
-      setError('Encryption failed. Check file and key integrity.');
+      setError('Encryption failed. Check the file and public key.');
       setIsProcessComplete(true);
     } finally {
       setLoading(false);
@@ -94,8 +94,8 @@ export default function EncryptOp() {
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col items-start justify-between gap-4 border-b border-[#e2e2e2] pb-5 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-bold leading-8 text-black">Encrypt target</h2>
-          <p className="mt-1 text-sm text-[#5e5e5e]">Apply RSA encryption using a designated public key.</p>
+          <h2 className="text-2xl font-bold leading-8 text-black">Encrypt file</h2>
+          <p className="mt-1 text-sm text-[#5e5e5e]">Encrypt a file with a public key.</p>
         </div>
         <button 
           onClick={handleGenerateKeys}
@@ -110,7 +110,7 @@ export default function EncryptOp() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="mb-2 block text-sm font-medium text-[#5e5e5e]">
-            Target file
+            File
           </label>
           <UploadBox onFileSelect={setFile} label="File" selectedFile={file} />
         </div>
@@ -135,7 +135,7 @@ export default function EncryptOp() {
         className="group flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-black bg-black px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#282828] disabled:border-[#e2e2e2] disabled:bg-[#efefef] disabled:text-[#afafaf]"
       >
         <DownloadCloud className="h-4 w-4 group-disabled:opacity-50" />
-        {loading ? 'Processing...' : 'Execute encryption'}
+        {loading ? 'Encrypting...' : 'Encrypt file'}
       </button>
       
       <ProcessLogs logs={processLogs} isComplete={isProcessComplete} />

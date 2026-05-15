@@ -30,7 +30,7 @@ export default function NewChatModal({ users, onClose, onCreateChat }: NewChatMo
       <div className="flex max-h-[90vh] w-full max-w-md flex-col rounded-2xl bg-white shadow-[0_4px_16px_rgba(0,0,0,0.16)]">
         <div className="shrink-0 border-b border-[#e2e2e2] p-4 sm:p-6">
           <h2 className="text-2xl font-bold text-black">New chat</h2>
-          <p className="mt-1 text-sm text-[#5e5e5e]">Select people to start a conversation</p>
+          <p className="mt-1 text-sm text-[#5e5e5e]">Choose people for this room.</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">

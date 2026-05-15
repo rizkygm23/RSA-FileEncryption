@@ -4,10 +4,7 @@ import { useState } from 'react';
 import type { ComponentType } from 'react';
 import Link from 'next/link';
 import {
-  Activity,
-  Cpu,
   FileCheck,
-  HardDrive,
   Lock,
   MessageSquareShare,
   PenTool,
@@ -36,7 +33,7 @@ const operationTabs: {
   {
     id: 'decrypt',
     label: 'Decrypt',
-    description: 'Restore a protected payload',
+    description: 'Open an encrypted file',
     icon: Unlock,
   },
   {
@@ -48,7 +45,7 @@ const operationTabs: {
   {
     id: 'verify',
     label: 'Verify',
-    description: 'Check authenticity and integrity',
+    description: 'Check a file signature',
     icon: FileCheck,
   },
 ];
@@ -102,15 +99,15 @@ export default function Dashboard() {
           >
             <MessageSquareShare className="h-4 w-4 shrink-0" />
             <span>
-              <span className="block font-medium">Secure chat</span>
-              <span className="block text-xs text-[#5e5e5e]">Room-based encrypted messaging</span>
+              <span className="block font-medium">Chat</span>
+              <span className="block text-xs text-[#5e5e5e]">Encrypted room messages</span>
             </span>
           </Link>
         </div>
 
         <div className="border-t border-[#e2e2e2] bg-black p-5 text-white">
           <div className="mb-3 flex items-center justify-between text-sm">
-            <span className="font-medium">System status</span>
+            <span className="font-medium">Backend</span>
             <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-medium text-black">
               <span className="h-1.5 w-1.5 rounded-full bg-black" />
               Online
@@ -118,7 +115,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center justify-between text-sm text-[#afafaf]">
             <span>Engine</span>
-            <span>RSA-2048</span>
+            <span>RSA</span>
           </div>
         </div>
       </aside>
@@ -126,36 +123,28 @@ export default function Dashboard() {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex min-h-16 shrink-0 items-center justify-between border-b border-[#e2e2e2] bg-white px-4 sm:px-6 lg:px-8">
           <div>
-            <p className="text-sm font-medium text-[#5e5e5e]">Active operation</p>
+            <p className="text-sm font-medium text-[#5e5e5e]">Selected tool</p>
             <h1 className="text-xl font-bold leading-7 text-black md:text-2xl">{activeOperation.label}</h1>
           </div>
 
-          <div className="hidden items-center gap-2 text-sm text-[#5e5e5e] md:flex">
-            <span className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[#efefef] px-4">
-              <Activity className="h-4 w-4" />
-              42ms
-            </span>
-            <span className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[#efefef] px-4">
-              <HardDrive className="h-4 w-4" />
-              12MB
-            </span>
-            <span className="inline-flex min-h-10 items-center gap-2 rounded-full bg-[#efefef] px-4">
-              <Cpu className="h-4 w-4" />
-              RSA
-            </span>
-          </div>
+          <Link
+            href="/chat"
+            className="hidden min-h-10 items-center rounded-full bg-[#efefef] px-4 text-sm font-medium text-black transition-colors hover:bg-[#e2e2e2] md:inline-flex"
+          >
+            Open chat
+          </Link>
         </header>
 
         <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-[1040px] space-y-6">
             <section className="rounded-2xl bg-black p-6 text-white sm:p-8">
               <div className="max-w-2xl">
-                <p className="mb-2 text-sm font-medium text-[#afafaf]">Secure file cryptography</p>
+                <p className="mb-2 text-sm font-medium text-[#afafaf]">RSA file tools</p>
                 <h2 className="text-3xl font-bold leading-10 sm:text-4xl sm:leading-[44px]">
-                  Encrypt, decrypt, sign, and verify files in one focused workspace.
+                  Encrypt, decrypt, sign, and verify files.
                 </h2>
                 <p className="mt-3 text-base text-[#efefef]">
-                  Upload files, attach the matching key artifact, and run RSA operations from a single controlled panel.
+                  Upload a file, choose the matching key, then run the tool you need.
                 </p>
               </div>
             </section>

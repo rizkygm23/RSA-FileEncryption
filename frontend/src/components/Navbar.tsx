@@ -24,7 +24,7 @@ export default function Navbar() {
             className="inline-flex min-h-11 items-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition-colors hover:bg-[#282828]"
           >
             <MessageSquareText className="h-4 w-4" />
-            Secure chat
+            Chat
           </Link>
         </div>
       </div>

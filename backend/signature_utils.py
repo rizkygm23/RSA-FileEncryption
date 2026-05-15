@@ -1,26 +1,24 @@
 import hashlib
 from rsa_utils import encrypt, decrypt
 
-def sign_file(private_key, file_bytes):
-    # Generate SHA256 Hash
-    hasher = hashlib.sha256()
-    hasher.update(file_bytes)
-    file_hash = hasher.hexdigest().encode('utf-8')
-    
-    # Encrypt hash with Private Key (signing)
-    signature_data = encrypt(private_key, file_hash)
-    return signature_data
 
-def verify_signature(public_key, file_bytes, signature_data):
-    # Generate new hash
-    hasher = hashlib.sha256()
-    hasher.update(file_bytes)
-    new_hash = hasher.hexdigest()
-    
-    # Decrypt signature with Public Key
+def _hash_file(file_bytes: bytes) -> str:
+    return hashlib.sha256(file_bytes).hexdigest()
+
+
+def sign_file(kunci_privat: tuple[int, int], file_bytes: bytes) -> list[int]:
+    hash_file = _hash_file(file_bytes).encode('utf-8')
+    return encrypt(kunci_privat, hash_file)
+
+
+def verify_signature(
+    kunci_publik: tuple[int, int],
+    file_bytes: bytes,
+    data_signature: list[int],
+) -> bool:
     try:
-        decrypted_hash_bytes = decrypt(public_key, signature_data)
-        decrypted_hash = decrypted_hash_bytes.decode('utf-8')
-        return new_hash == decrypted_hash
-    except Exception as e:
+        hash_dari_signature = decrypt(kunci_publik, data_signature).decode('utf-8')
+    except (UnicodeDecodeError, ValueError):
         return False
+
+    return _hash_file(file_bytes) == hash_dari_signature

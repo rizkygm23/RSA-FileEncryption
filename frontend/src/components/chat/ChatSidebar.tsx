@@ -115,7 +115,7 @@ export default function ChatSidebar({
               <MessageCircle className="h-6 w-6" />
             </div>
             <p className="mb-1 text-sm font-medium text-black">No chats yet</p>
-            <p className="text-xs text-[#5e5e5e]">Click New chat to start</p>
+            <p className="text-xs text-[#5e5e5e]">Create a chat to start.</p>
           </div>
         ) : (
           <div className="divide-y divide-[#efefef]">

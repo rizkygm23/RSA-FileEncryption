@@ -16,7 +16,7 @@ export default function LoginPage() {
     e.preventDefault();
     
     if (!username.trim()) {
-      setError('Please enter your name');
+      setError('Enter your name first.');
       return;
     }
 
@@ -57,7 +57,7 @@ export default function LoginPage() {
       }
     } catch (err: unknown) {
       console.error('Login error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to login. Please try again.');
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -67,8 +67,8 @@ export default function LoginPage() {
     <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-[#f3f3f3] px-4 py-10 sm:px-6">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <h1 className="mb-2 text-4xl font-bold leading-[44px] text-black">Welcome to CipherVault</h1>
-          <p className="text-base text-[#5e5e5e]">Enter your name to start secure messaging</p>
+          <h1 className="mb-2 text-4xl font-bold leading-[44px] text-black">Sign in to chat</h1>
+          <p className="text-base text-[#5e5e5e]">Enter your name to continue.</p>
         </div>
 
         <div className="rounded-2xl bg-white p-6 shadow-[0_4px_16px_rgba(0,0,0,0.16)] sm:p-8">
@@ -106,7 +106,7 @@ export default function LoginPage() {
 
           <div className="mt-6 border-t border-[#e2e2e2] pt-6">
             <p className="text-center text-xs text-[#5e5e5e]">
-              Each chat room will have its own RSA key pair for secure group messaging
+              Each chat room has its own RSA key pair.
             </p>
           </div>
         </div>

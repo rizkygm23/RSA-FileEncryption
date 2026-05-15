@@ -1,57 +1,82 @@
 import random
+from collections.abc import Iterable
 
-def gcd(a, b):
-    while b != 0:
-        a, b = b, a % b
-    return a
+Kunci = tuple[int, int]
+PasanganKunci = tuple[Kunci, Kunci]
 
-def multiplicative_inverse(e, phi):
-    d = 0
-    x1, x2, x3 = 1, 0, phi
-    y1, y2, y3 = 0, 1, e
-    while y3 != 0:
-        q = x3 // y3
-        y1, y2, y3, x1, x2, x3 = (x1 - q * y1), (x2 - q * y2), (x3 - q * y3), y1, y2, y3
-    if x3 == 1:
-        return x2 % phi
 
-def is_prime(num):
-    if num == 2: return True
-    if num < 2 or num % 2 == 0: return False
-    for n in range(3, int(num**0.5)+2, 2):
-        if num % n == 0:
+def gcd(kiri: int, kanan: int) -> int:
+    while kanan:
+        kiri, kanan = kanan, kiri % kanan
+    return kiri
+
+
+def multiplicative_inverse(eksponen: int, totien: int) -> int:
+    koefisien_lama = 0
+    koefisien = 1
+    sisa_lama = totien
+    sisa = eksponen
+
+    while sisa:
+        hasil_bagi = sisa_lama // sisa
+        koefisien_lama, koefisien = (
+            koefisien,
+            koefisien_lama - hasil_bagi * koefisien,
+        )
+        sisa_lama, sisa = (
+            sisa,
+            sisa_lama - hasil_bagi * sisa,
+        )
+
+    if sisa_lama != 1:
+        raise ValueError('Eksponen publik tidak punya invers modular.')
+
+    return koefisien_lama % totien
+
+
+def is_prime(bilangan: int) -> bool:
+    if bilangan == 2:
+        return True
+    if bilangan < 2 or bilangan % 2 == 0:
+        return False
+
+    for pembagi in range(3, int(bilangan**0.5) + 1, 2):
+        if bilangan % pembagi == 0:
             return False
     return True
 
-def generate_keypair(p, q):
+
+def _pilih_eksponen_publik(totien: int) -> int:
+    while True:
+        eksponen = random.randrange(1, totien)
+        if gcd(eksponen, totien) == 1:
+            return eksponen
+
+
+def generate_keypair(p: int, q: int) -> PasanganKunci:
     if not (is_prime(p) and is_prime(q)):
-        raise ValueError('Both numbers must be prime.')
-    elif p == q:
-        raise ValueError('p and q cannot be equal')
-    n = p * q
-    phi = (p-1) * (q-1)
-    
-    # In order to use the exact keys from the project description (n=3233, e=17)
-    if n == 3233:
-        e = 17
+        raise ValueError('Kedua bilangan harus prima.')
+
+    if p == q:
+        raise ValueError('p dan q tidak boleh sama.')
+
+    modulus = p * q
+    totien = (p - 1) * (q - 1)
+
+    if modulus == 3233:
+        eksponen_publik = 17
     else:
-        e = random.randrange(1, phi)
-        g = gcd(e, phi)
-        while g != 1:
-            e = random.randrange(1, phi)
-            g = gcd(e, phi)
-            
-    d = multiplicative_inverse(e, phi)
-    return ((e, n), (d, n))
+        eksponen_publik = _pilih_eksponen_publik(totien)
 
-def encrypt(pk, plaintext_bytes):
-    key, n = pk
-    # Encrypt each byte
-    cipher = [pow(char, key, n) for char in plaintext_bytes]
-    return cipher
+    eksponen_privat = multiplicative_inverse(eksponen_publik, totien)
+    return (eksponen_publik, modulus), (eksponen_privat, modulus)
 
-def decrypt(pk, ciphertext):
-    key, n = pk
-    # Decrypt each integer back to byte
-    plain = [pow(char, key, n) for char in ciphertext]
-    return bytes(plain)
+
+def encrypt(kunci: Kunci, plaintext_bytes: bytes) -> list[int]:
+    eksponen, modulus = kunci
+    return [pow(byte, eksponen, modulus) for byte in plaintext_bytes]
+
+
+def decrypt(kunci: Kunci, ciphertext: Iterable[int]) -> bytes:
+    eksponen, modulus = kunci
+    return bytes(pow(nilai, eksponen, modulus) for nilai in ciphertext)

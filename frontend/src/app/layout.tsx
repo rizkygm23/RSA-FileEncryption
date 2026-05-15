@@ -3,8 +3,8 @@ import Navbar from "@/components/Navbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CipherVault v3 - Secure File Communication",
-  description: "RSA Encryption and Digital Signature Platform",
+  title: "CipherVault",
+  description: "RSA file encryption, signatures, and chat",
 };
 
 export const viewport: Viewport = {

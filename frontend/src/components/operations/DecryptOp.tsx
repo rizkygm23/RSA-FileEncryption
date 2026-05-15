@@ -18,7 +18,7 @@ export default function DecryptOp() {
 
   const handleDecrypt = async () => {
     if (!file || !keyFile) {
-      setError('Missing required files.');
+      setError('Choose an encrypted file and a private key first.');
       return;
     }
     
@@ -28,19 +28,19 @@ export default function DecryptOp() {
       setIsProcessComplete(false);
       setProcessLogs([]);
       
-      setProcessLogs(['[SYS] Reading encrypted file chunks...']);
+      setProcessLogs(['Reading the encrypted file...']);
       await delay(800);
       
-      setProcessLogs(prev => [...prev, '[KEY] Reading Private Key (n, d) from file...']);
+      setProcessLogs(prev => [...prev, 'Reading the private key...']);
       await delay(800);
       
-      setProcessLogs(prev => [...prev, '[RSA] Executing Formula: M = (C ^ d) mod n...']);
+      setProcessLogs(prev => [...prev, 'Decrypting the file with RSA...']);
       await delay(1000);
       
-      setProcessLogs(prev => [...prev, '[NET] Processing decryption on secure server...']);
+      setProcessLogs(prev => [...prev, 'Sending the file to the backend...']);
       const decryptedBlob = await decryptFile(file, keyFile);
       
-      setProcessLogs(prev => [...prev, '[SYS] Decryption successful. Restoring original file...']);
+      setProcessLogs(prev => [...prev, 'Decryption finished. Downloading the original file...']);
       setIsProcessComplete(true);
       
       const originalName = file.name.replace('.encrypted', '');
@@ -54,7 +54,7 @@ export default function DecryptOp() {
       link.remove();
     } catch (err) {
       console.error(err);
-      setError('Decryption failed. Validate private key integrity.');
+      setError('Decryption failed. Check the encrypted file and private key.');
       setIsProcessComplete(true);
     } finally {
       setLoading(false);
@@ -64,8 +64,8 @@ export default function DecryptOp() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="border-b border-[#e2e2e2] pb-5">
-        <h2 className="text-2xl font-bold leading-8 text-black">Decrypt payload</h2>
-        <p className="mt-1 text-sm text-[#5e5e5e]">Restore an encrypted file utilizing the corresponding private key.</p>
+        <h2 className="text-2xl font-bold leading-8 text-black">Decrypt file</h2>
+        <p className="mt-1 text-sm text-[#5e5e5e]">Open an encrypted file with its private key.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -96,7 +96,7 @@ export default function DecryptOp() {
         className="group flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-black bg-black px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#282828] disabled:border-[#e2e2e2] disabled:bg-[#efefef] disabled:text-[#afafaf]"
       >
         <Unlock className="h-4 w-4 group-disabled:opacity-50" />
-        {loading ? 'Processing...' : 'Execute decryption'}
+        {loading ? 'Decrypting...' : 'Decrypt file'}
       </button>
       
       <ProcessLogs logs={processLogs} isComplete={isProcessComplete} />

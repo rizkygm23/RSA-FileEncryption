@@ -230,8 +230,8 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#efefef] text-[#5e5e5e]">
             <MessageCircle className="h-8 w-8" />
           </div>
-          <h3 className="mb-2 text-lg font-semibold text-black">Select a chat</h3>
-          <p className="text-sm text-[#5e5e5e]">Choose a conversation from the sidebar to start messaging</p>
+          <h3 className="mb-2 text-lg font-semibold text-black">Choose a chat</h3>
+          <p className="text-sm text-[#5e5e5e]">Pick a room from the sidebar.</p>
         </div>
       </div>
     );
@@ -251,7 +251,7 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
                 <MessageCircle className="h-6 w-6" />
               </div>
               <p className="mb-1 text-sm font-medium text-black">No messages yet</p>
-              <p className="text-xs text-[#5e5e5e]">Send a message to start the conversation</p>
+              <p className="text-xs text-[#5e5e5e]">Send a message to start.</p>
             </div>
           </div>
         ) : (

@@ -18,7 +18,7 @@ export default function SignOp() {
 
   const handleSign = async () => {
     if (!file || !keyFile) {
-      setError('Missing required files.');
+      setError('Choose a file and a private key first.');
       return;
     }
     
@@ -28,19 +28,19 @@ export default function SignOp() {
       setIsProcessComplete(false);
       setProcessLogs([]);
       
-      setProcessLogs(['[SYS] Reading target file...']);
+      setProcessLogs(['Reading the selected file...']);
       await delay(600);
       
-      setProcessLogs(prev => [...prev, '[HASH] Generating SHA-256 Hash of the file...']);
+      setProcessLogs(prev => [...prev, 'Creating the SHA-256 hash...']);
       await delay(800);
       
-      setProcessLogs(prev => [...prev, '[RSA] Encrypting the Hash using Private Key (n, d)...']);
+      setProcessLogs(prev => [...prev, 'Signing the hash with the private key...']);
       await delay(1000);
       
-      setProcessLogs(prev => [...prev, '[NET] Creating Digital Signature on secure server...']);
+      setProcessLogs(prev => [...prev, 'Sending the file to the backend...']);
       const signatureBlob = await signFile(file, keyFile);
       
-      setProcessLogs(prev => [...prev, '[SYS] Signature generated successfully. Downloading artifact...']);
+      setProcessLogs(prev => [...prev, 'Signature created. Downloading the signature file...']);
       setIsProcessComplete(true);
       
       const url = window.URL.createObjectURL(new Blob([signatureBlob]));
@@ -52,7 +52,7 @@ export default function SignOp() {
       link.remove();
     } catch (err) {
       console.error(err);
-      setError('Signing failed. Validate file and private key.');
+      setError('Signing failed. Check the file and private key.');
       setIsProcessComplete(true);
     } finally {
       setLoading(false);
@@ -63,13 +63,13 @@ export default function SignOp() {
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="border-b border-[#e2e2e2] pb-5">
         <h2 className="text-2xl font-bold leading-8 text-black">Generate signature</h2>
-        <p className="mt-1 text-sm text-[#5e5e5e]">Sign a payload using a private key to prove authenticity and non-repudiation.</p>
+        <p className="mt-1 text-sm text-[#5e5e5e]">Create a signature for a file with a private key.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="mb-2 block text-sm font-medium text-[#5e5e5e]">
-            Target payload
+            File
           </label>
           <UploadBox onFileSelect={setFile} label="File" selectedFile={file} />
         </div>
