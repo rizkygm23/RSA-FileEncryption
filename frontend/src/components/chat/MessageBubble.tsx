@@ -14,6 +14,7 @@ interface MessageBubbleProps {
 
 export default function MessageBubble({ message, currentUser, users, room }: MessageBubbleProps) {
   const [decryptedContent, setDecryptedContent] = useState<string | null>(null);
+  const [isDecryptingText, setIsDecryptingText] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -27,10 +28,10 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
     let isMounted = true;
 
     const decryptText = async () => {
-      if (message.message_type !== 'text' || decryptedContent || isOpening) return;
+      if (message.message_type !== 'text' || decryptedContent) return;
 
       try {
-        setIsOpening(true);
+        setIsDecryptingText(true);
         const decryptedText = await decryptChatText(
           message.encrypted_content,
           room.private_key
@@ -41,7 +42,7 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
         const messageText = error instanceof Error ? error.message : 'Failed to decrypt';
         if (isMounted) setDecryptedContent(`Error: ${messageText}`);
       } finally {
-        if (isMounted) setIsOpening(false);
+        if (isMounted) setIsDecryptingText(false);
       }
     };
 
@@ -50,7 +51,7 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
     return () => {
       isMounted = false;
     };
-  }, [decryptedContent, isOpening, message.encrypted_content, message.message_type, message.id, room.private_key]);
+  }, [decryptedContent, message.encrypted_content, message.message_type, message.id, room.private_key]);
 
   useEffect(() => {
     return () => {
@@ -151,7 +152,7 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
         
         {message.message_type === 'text' ? (
           <div className="px-3 py-2">
-            {isOpening ? (
+            {isDecryptingText ? (
               <div className={`flex items-center gap-2 text-xs ${isOwnMessage ? 'text-[#efefef]' : 'text-[#5e5e5e]'}`}>
                 <Loader2 className="h-3 w-3 animate-spin" />
                 <span>Decrypting...</span>
