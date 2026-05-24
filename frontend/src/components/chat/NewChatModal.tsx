@@ -1,15 +1,23 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { User } from '@/lib/supabase';
 import { Check, X } from 'lucide-react';
 
 interface NewChatModalProps {
   users: User[];
   onClose: () => void;
-  onCreateChat: (selectedUserIds: string[]) => void;
+  onCreateChat: (selectedUserIds: string[]) => void | Promise<void>;
 }
 
 export default function NewChatModal({ users, onClose, onCreateChat }: NewChatModalProps) {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [creating, setCreating] = useState(false);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   const toggleUser = (userId: string) => {
     setSelectedUsers(prev =>
@@ -19,9 +27,14 @@ export default function NewChatModal({ users, onClose, onCreateChat }: NewChatMo
     );
   };
 
-  const handleCreate = () => {
-    if (selectedUsers.length > 0) {
-      onCreateChat(selectedUsers);
+  const handleCreate = async () => {
+    if (selectedUsers.length === 0 || creating) return;
+
+    setCreating(true);
+    try {
+      await onCreateChat(selectedUsers);
+    } finally {
+      if (isMounted.current) setCreating(false);
     }
   };
 
@@ -80,11 +93,11 @@ export default function NewChatModal({ users, onClose, onCreateChat }: NewChatMo
           </button>
           <button
             onClick={handleCreate}
-            disabled={selectedUsers.length === 0}
+            disabled={selectedUsers.length === 0 || creating}
             className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full bg-black px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#282828] disabled:bg-[#efefef] disabled:text-[#afafaf]"
           >
             <Check className="h-4 w-4" />
-            Create chat
+            {creating ? 'Creating...' : 'Create chat'}
           </button>
         </div>
       </div>

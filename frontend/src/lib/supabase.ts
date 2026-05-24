@@ -28,6 +28,7 @@ export interface User {
 export interface ChatRoom {
   id: string;
   room_name: string | null;
+  direct_pair_key?: string | null;
   public_key: string;
   private_key: string;
   created_by: string;

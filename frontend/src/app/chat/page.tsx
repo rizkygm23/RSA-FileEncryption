@@ -9,6 +9,16 @@ import ChatWindow from '@/components/chat/ChatWindow';
 import NewChatModal from '@/components/chat/NewChatModal';
 import { Menu } from 'lucide-react';
 
+const getDirectPairKey = (firstUserId: string, secondUserId: string) =>
+  [firstUserId, secondUserId].sort().join(':');
+
+const isMissingDirectPairKeyColumn = (error: { code?: string; message?: string } | null) => {
+  const message = error?.message?.toLowerCase() ?? '';
+  return error?.code === '42703' || error?.code === 'PGRST204' || message.includes('direct_pair_key');
+};
+
+const isUniqueViolation = (error: { code?: string } | null) => error?.code === '23505';
+
 export default function ChatPage() {
   const router = useRouter();
   const currentUser = useUserStore((state) => state.currentUser);
@@ -93,29 +103,151 @@ export default function ChatPage() {
     router.push('/login');
   };
 
+  const findExistingDirectRoomByPairKey = async (directPairKey: string) => {
+    const { data, error } = await supabase
+      .from('chat_rooms_kriptografi')
+      .select('*')
+      .eq('direct_pair_key', directPairKey)
+      .order('updated_at', { ascending: false })
+      .limit(1);
+
+    if (error) {
+      if (isMissingDirectPairKeyColumn(error)) return null;
+      throw error;
+    }
+
+    return data?.[0] ?? null;
+  };
+
+  const findExistingDirectRoomByMembers = async (firstUserId: string, secondUserId: string) => {
+    const { data: currentMemberships, error: currentMembershipsError } = await supabase
+      .from('room_members_kriptografi')
+      .select('room_id')
+      .eq('user_id', firstUserId);
+
+    if (currentMembershipsError) throw currentMembershipsError;
+
+    const roomIds = [...new Set((currentMemberships ?? []).map(member => member.room_id))];
+    if (roomIds.length === 0) return null;
+
+    const { data: allMembers, error: allMembersError } = await supabase
+      .from('room_members_kriptografi')
+      .select('room_id, user_id')
+      .in('room_id', roomIds);
+
+    if (allMembersError) throw allMembersError;
+
+    const targetPairKey = getDirectPairKey(firstUserId, secondUserId);
+    const membersByRoom = new Map<string, Set<string>>();
+
+    for (const member of allMembers ?? []) {
+      const members = membersByRoom.get(member.room_id) ?? new Set<string>();
+      members.add(member.user_id);
+      membersByRoom.set(member.room_id, members);
+    }
+
+    const matchingRoomIds = [...membersByRoom.entries()]
+      .filter(([, memberIds]) => {
+        const ids = [...memberIds];
+        return ids.length === 2 && getDirectPairKey(ids[0], ids[1]) === targetPairKey;
+      })
+      .map(([roomId]) => roomId);
+
+    if (matchingRoomIds.length === 0) return null;
+
+    const { data: matchingRooms, error: matchingRoomsError } = await supabase
+      .from('chat_rooms_kriptografi')
+      .select('*')
+      .in('id', matchingRoomIds)
+      .order('updated_at', { ascending: false })
+      .limit(1);
+
+    if (matchingRoomsError) throw matchingRoomsError;
+
+    return matchingRooms?.[0] ?? null;
+  };
+
+  const findExistingDirectRoom = async (selectedUserId: string, directPairKey: string) => {
+    const roomByKey = await findExistingDirectRoomByPairKey(directPairKey);
+    if (roomByKey) return roomByKey;
+
+    return findExistingDirectRoomByMembers(currentUser!.id, selectedUserId);
+  };
+
+  const openExistingRoom = async (room: ChatRoom) => {
+    await loadRooms();
+    setSelectedRoom(room);
+    setShowNewChatModal(false);
+    setShowSidebar(false);
+  };
+
   const handleNewChat = async (selectedUserIds: string[]) => {
-    if (!currentUser || selectedUserIds.length === 0) return;
+    if (!currentUser) return;
+
+    const uniqueSelectedUserIds = [...new Set(selectedUserIds)].filter(userId => userId !== currentUser.id);
+    if (uniqueSelectedUserIds.length === 0) return;
+
+    const directPairKey = uniqueSelectedUserIds.length === 1
+      ? getDirectPairKey(currentUser.id, uniqueSelectedUserIds[0])
+      : null;
 
     try {
+      if (directPairKey) {
+        const existingRoom = await findExistingDirectRoom(uniqueSelectedUserIds[0], directPairKey);
+        if (existingRoom) {
+          await openExistingRoom(existingRoom);
+          return;
+        }
+      }
+
       // Generate RSA key pair for this room
       const { generateKey } = await import('@/services/api');
       const keys = await generateKey();
 
+      const baseRoomPayload = {
+        created_by: currentUser.id,
+        public_key: keys.public_key,
+        private_key: keys.private_key,
+      };
+
+      const roomPayload = directPairKey
+        ? { ...baseRoomPayload, direct_pair_key: directPairKey }
+        : baseRoomPayload;
+
       // Create new room with key pair
-      const { data: newRoom, error: roomError } = await supabase
+      let { data: newRoom, error: roomError } = await supabase
         .from('chat_rooms_kriptografi')
-        .insert({
-          created_by: currentUser.id,
-          public_key: keys.public_key,
-          private_key: keys.private_key,
-        })
+        .insert(roomPayload)
         .select()
         .single();
 
-      if (roomError) throw roomError;
+      if (roomError && directPairKey && isMissingDirectPairKeyColumn(roomError)) {
+        const fallbackResult = await supabase
+          .from('chat_rooms_kriptografi')
+          .insert(baseRoomPayload)
+          .select()
+          .single();
+
+        newRoom = fallbackResult.data;
+        roomError = fallbackResult.error;
+      }
+
+      if (roomError) {
+        if (directPairKey && isUniqueViolation(roomError)) {
+          const existingRoom = await findExistingDirectRoom(uniqueSelectedUserIds[0], directPairKey);
+          if (existingRoom) {
+            await openExistingRoom(existingRoom);
+            return;
+          }
+        }
+
+        throw roomError;
+      }
+
+      if (!newRoom) throw new Error('Failed to create chat room');
 
       // Add members (current user + selected users)
-      const members = [currentUser.id, ...selectedUserIds].map(userId => ({
+      const members = [currentUser.id, ...uniqueSelectedUserIds].map(userId => ({
         room_id: newRoom.id,
         user_id: userId,
       }));
@@ -132,6 +264,7 @@ export default function ChatPage() {
       setShowSidebar(false); // Close sidebar on mobile after selecting
     } catch (error) {
       console.error('Error creating chat:', error);
+      alert('Failed to create chat. Please try again.');
     }
   };
 

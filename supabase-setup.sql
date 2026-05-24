@@ -14,6 +14,7 @@ CREATE TABLE users_kriptografi (
 CREATE TABLE chat_rooms_kriptografi (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   room_name TEXT,
+  direct_pair_key TEXT,
   
   -- Room Key Pair (shared by all members)
   public_key TEXT NOT NULL,
@@ -74,6 +75,7 @@ CREATE INDEX idx_messages_sender_id ON messages_kriptografi(sender_id);
 CREATE INDEX idx_messages_created_at ON messages_kriptografi(created_at DESC);
 CREATE INDEX idx_room_members_room_id ON room_members_kriptografi(room_id);
 CREATE INDEX idx_room_members_user_id ON room_members_kriptografi(user_id);
+CREATE UNIQUE INDEX idx_chat_rooms_direct_pair_key_unique ON chat_rooms_kriptografi(direct_pair_key) WHERE direct_pair_key IS NOT NULL;
 CREATE INDEX idx_message_recipients_message_id ON message_recipients_kriptografi(message_id);
 CREATE INDEX idx_message_recipients_recipient_id ON message_recipients_kriptografi(recipient_id);
 
