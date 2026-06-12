@@ -58,3 +58,21 @@ export const decryptChatText = async (encryptedContent: string, privateKey: stri
     });
     return response.data.decrypted_text;
 };
+
+export const verifyChatTextSignature = async (originalText: string, signature: string, publicKey: string) => {
+    const response = await axios.post(`${API_URL}/chat/verify-text`, {
+        original_text: originalText,
+        signature: signature,
+        public_key: publicKey,
+    });
+    return response.data;
+};
+
+export const verifyChatFileSignature = async (fileBlob: Blob, signature: string, publicKey: string) => {
+    const file = new File([fileBlob], 'file');
+    const sigBlob = new Blob([signature], { type: 'text/plain' });
+    const sigFile = new File([sigBlob], 'signature.txt');
+    const keyBlob = new Blob([publicKey], { type: 'text/plain' });
+    const keyFile = new File([keyBlob], 'public_key.txt');
+    return await verifySignature(file, keyFile, sigFile);
+};

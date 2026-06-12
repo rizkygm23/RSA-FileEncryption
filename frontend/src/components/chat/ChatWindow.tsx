@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FileText, MessageCircle, Paperclip, Send, X } from 'lucide-react';
 
-import { ChatRoom, Message, User } from '@/lib/supabase';
+import { ChatRoom, Message, MessageRecipient, User } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
 import { encryptFile, signFile } from '@/services/api';
 import MessageBubble from './MessageBubble';
@@ -16,6 +16,8 @@ interface ChatWindowProps {
 
 export default function ChatWindow({ currentUser, room, users }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [messageRecipients, setMessageRecipients] = useState<Map<string, MessageRecipient[]>>(new Map());
+  const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
@@ -23,6 +25,27 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadMessageRecipients = useCallback(async (messageIds: string[]) => {
+    if (messageIds.length === 0) {
+      setMessageRecipients(new Map());
+      return;
+    }
+    const { data: recipientsData } = await supabase
+      .from('message_recipients_kriptografi')
+      .select('*')
+      .in('message_id', messageIds);
+
+    if (recipientsData) {
+      const map = new Map<string, MessageRecipient[]>();
+      for (const r of recipientsData) {
+        const existing = map.get(r.message_id) || [];
+        existing.push(r);
+        map.set(r.message_id, existing);
+      }
+      setMessageRecipients(map);
+    }
+  }, []);
 
   const loadMessages = useCallback(async () => {
     if (!room) return;
@@ -34,8 +57,11 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
       .eq('is_deleted', false)
       .order('created_at', { ascending: true });
 
-    if (data) setMessages(data);
-  }, [room]);
+    if (data) {
+      setMessages(data);
+      await loadMessageRecipients(data.map((m) => m.id));
+    }
+  }, [room, loadMessageRecipients]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -73,12 +99,60 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
           void loadMessages();
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'message_recipients_kriptografi',
+        },
+        async () => {
+          // Reload all recipients for this room's messages
+          const { data: roomMessages } = await supabase
+            .from('messages_kriptografi')
+            .select('id')
+            .eq('room_id', room.id);
+          if (roomMessages && roomMessages.length > 0) {
+            await loadMessageRecipients(roomMessages.map((m) => m.id));
+          }
+        }
+      )
       .subscribe();
+
+    // Polling fallback for realtime: refetch messages every second
+    const pollInterval = setInterval(() => {
+      void loadMessages();
+    }, 1000);
 
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
     };
-  }, [loadMessages, room]);
+  }, [loadMessages, loadMessageRecipients, room]);
+
+  useEffect(() => {
+    if (!room || !currentUser || messages.length === 0) return;
+
+    const markMessagesAsRead = async () => {
+      const unreadMessageIds = messages
+        .filter((m) => m.sender_id !== currentUser.id)
+        .map((m) => m.id);
+
+      if (unreadMessageIds.length === 0) return;
+
+      await supabase
+        .from('message_recipients_kriptografi')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .in('message_id', unreadMessageIds)
+        .eq('recipient_id', currentUser.id)
+        .eq('is_read', false);
+
+      // Reload recipient statuses
+      await loadMessageRecipients(messages.map((m) => m.id));
+    };
+
+    markMessagesAsRead();
+  }, [messages, room, currentUser, loadMessageRecipients]);
 
   const getRoomMembers = async () => {
     if (!room) return [];
@@ -110,6 +184,19 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
       const signatureBlob = await signFile(textFile, privateKeyFile);
       const signature = await signatureBlob.text();
 
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMsg: Message = {
+        id: tempId,
+        room_id: room.id,
+        sender_id: currentUser.id,
+        message_type: 'text',
+        encrypted_content: encryptedText,
+        signature,
+        created_at: new Date().toISOString(),
+        is_deleted: false,
+      };
+      setOptimisticMessages((prev) => [...prev, optimisticMsg]);
+
       const { data: newMessage, error } = await supabase
         .from('messages_kriptografi')
         .insert({
@@ -138,6 +225,7 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
       }
 
       setMessageText('');
+      setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempId));
       await loadMessages();
     } catch (error) {
       console.error('Error sending message:', error);
@@ -174,6 +262,22 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
       const signatureBlob = await signFile(selectedFile, privateKeyFile);
       const signature = await signatureBlob.text();
 
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMsg: Message = {
+        id: tempId,
+        room_id: room.id,
+        sender_id: currentUser.id,
+        message_type: 'file',
+        encrypted_content: urlData.publicUrl,
+        signature,
+        file_name: selectedFile.name,
+        file_size: selectedFile.size,
+        file_url: urlData.publicUrl,
+        created_at: new Date().toISOString(),
+        is_deleted: false,
+      };
+      setOptimisticMessages((prev) => [...prev, optimisticMsg]);
+
       const { data: newMessage, error } = await supabase
         .from('messages_kriptografi')
         .insert({
@@ -206,6 +310,7 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
 
       setSelectedFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
+      setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempId));
       await loadMessages();
     } catch (error) {
       console.error('Error sending file:', error);
@@ -244,30 +349,36 @@ export default function ChatWindow({ currentUser, room, users }: ChatWindowProps
         onScroll={handleScroll}
         className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6"
       >
-        {messages.length === 0 ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="max-w-sm text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#efefef] text-[#5e5e5e]">
-                <MessageCircle className="h-6 w-6" />
+        {(() => {
+          const allMessages = [...messages, ...optimisticMessages].sort(
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+          return allMessages.length === 0 ? (
+            <div className="flex h-full items-center justify-center">
+              <div className="max-w-sm text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#efefef] text-[#5e5e5e]">
+                  <MessageCircle className="h-6 w-6" />
+                </div>
+                <p className="mb-1 text-sm font-medium text-black">No messages yet</p>
+                <p className="text-xs text-[#5e5e5e]">Send a message to start.</p>
               </div>
-              <p className="mb-1 text-sm font-medium text-black">No messages yet</p>
-              <p className="text-xs text-[#5e5e5e]">Send a message to start.</p>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                currentUser={currentUser}
-                users={users}
-                room={room}
-              />
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
+          ) : (
+            <div className="space-y-4">
+              {allMessages.map((message) => (
+                <MessageBubble
+                  key={message.id}
+                  message={message}
+                  currentUser={currentUser}
+                  users={users}
+                  room={room}
+                  recipients={messageRecipients.get(message.id)}
+                />
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          );
+        })()}
       </div>
 
       <div className="shrink-0 border-t border-[#e2e2e2] bg-white p-4">

@@ -200,5 +200,34 @@ def decrypt_chat_text():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/chat/verify-text', methods=['POST'])
+def verify_chat_text():
+    """Verify signature of a text message"""
+    try:
+        data = request.get_json()
+        original_text = data.get('original_text')
+        signature = data.get('signature')
+        public_key = data.get('public_key')
+        
+        if not original_text or signature is None or not public_key:
+            return jsonify({'error': 'original_text, signature, and public_key are required'}), 400
+        
+        # Parse public key
+        pk = parse_key(public_key, 'public')
+        
+        # Parse signature data (comma-separated integers)
+        signature_data = [int(x) for x in signature.split(',') if x.strip()]
+        
+        # Verify signature
+        is_valid = verify_signature(pk, original_text.encode('utf-8'), signature_data)
+        
+        return jsonify({
+            'valid': is_valid,
+            'message': 'Signature is valid' if is_valid else 'Signature is invalid or message has been modified'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

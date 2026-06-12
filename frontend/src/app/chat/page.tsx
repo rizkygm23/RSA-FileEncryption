@@ -93,8 +93,14 @@ export default function ChatPage() {
       )
       .subscribe();
 
+    // Polling fallback for realtime: refetch rooms every second
+    const pollInterval = setInterval(() => {
+      void loadRooms();
+    }, 1000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
     };
   }, [currentUser, loadData, loadRooms, router]);
 
@@ -286,6 +292,10 @@ export default function ChatPage() {
         </div>
       </div>
     );
+  }
+
+  if (!currentUser) {
+    return null;
   }
 
   return (

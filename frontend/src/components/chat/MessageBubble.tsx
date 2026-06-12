@@ -1,57 +1,66 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { User, Message, ChatRoom } from '@/lib/supabase';
-import { decryptFile, decryptChatText } from '@/services/api';
-import { Check, Download, Eye, FileImage, FileText, Loader2, Paperclip } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { User, Message, ChatRoom, MessageRecipient } from '@/lib/supabase';
+import { decryptFile, decryptChatText, verifyChatTextSignature, verifyChatFileSignature } from '@/services/api';
+import { Check, CheckCheck, Download, Eye, FileImage, FileText, Loader2, Paperclip } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: Message;
   currentUser: User;
   users: User[];
   room: ChatRoom;
+  recipients?: MessageRecipient[];
 }
 
-export default function MessageBubble({ message, currentUser, users, room }: MessageBubbleProps) {
+export default function MessageBubble({ message, currentUser, users, room, recipients }: MessageBubbleProps) {
   const [decryptedContent, setDecryptedContent] = useState<string | null>(null);
   const [isDecryptingText, setIsDecryptingText] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [signatureValid, setSignatureValid] = useState<boolean | null>(null);
 
   const sender = users.find(u => u.id === message.sender_id);
   const isOwnMessage = message.sender_id === currentUser.id;
 
-  // Auto-decrypt text messages
+  const hasDecrypted = useRef(false);
+
+  // Auto-decrypt text messages + verify signature silently
   useEffect(() => {
-    let isMounted = true;
+    if (message.message_type !== 'text' || hasDecrypted.current) return;
+    hasDecrypted.current = true;
 
     const decryptText = async () => {
-      if (message.message_type !== 'text' || decryptedContent) return;
-
       try {
         setIsDecryptingText(true);
         const decryptedText = await decryptChatText(
           message.encrypted_content,
           room.private_key
         );
-        if (isMounted) setDecryptedContent(decryptedText);
+        setDecryptedContent(decryptedText);
+
+        // Silent signature verification
+        try {
+          const result = await verifyChatTextSignature(decryptedText, message.signature, room.public_key);
+          setSignatureValid(result.valid);
+        } catch (sigErr) {
+          console.error('Signature verification error:', sigErr);
+          setSignatureValid(false);
+        }
       } catch (error: unknown) {
         console.error('Decryption error:', error);
         const messageText = error instanceof Error ? error.message : 'Failed to decrypt';
-        if (isMounted) setDecryptedContent(`Error: ${messageText}`);
+        setDecryptedContent(`Error: ${messageText}`);
       } finally {
-        if (isMounted) setIsDecryptingText(false);
+        // Always reset loading state even if component unmounted
+        setIsDecryptingText(false);
       }
     };
 
     decryptText();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [decryptedContent, message.encrypted_content, message.message_type, message.id, room.private_key]);
+  }, [message.id, message.encrypted_content, message.message_type, message.signature, room.private_key, room.public_key]);
 
   useEffect(() => {
     return () => {
@@ -94,10 +103,23 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
     return await decryptFile(encryptedFile, privateKeyFile);
   };
 
+  const verifyFileSigSilently = async (decryptedBlob: Blob) => {
+    try {
+      const result = await verifyChatFileSignature(decryptedBlob, message.signature, room.public_key);
+      setSignatureValid(result.valid);
+    } catch (e) {
+      console.error('File signature verification error:', e);
+      setSignatureValid(false);
+    }
+  };
+
   const handleOpenFile = async () => {
     try {
       setIsOpening(true);
       const decryptedBlob = await decryptFileData();
+      
+      // Silent signature verification
+      await verifyFileSigSilently(decryptedBlob);
       
       // Create preview URL
       const url = window.URL.createObjectURL(decryptedBlob);
@@ -115,6 +137,9 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
     try {
       setIsDownloading(true);
       const decryptedBlob = await decryptFileData();
+      
+      // Silent signature verification
+      await verifyFileSigSilently(decryptedBlob);
       
       // Download file
       const url = window.URL.createObjectURL(decryptedBlob);
@@ -138,6 +163,26 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
   const isImage = fileName.match(/\.(jpg|jpeg|png|gif|webp)$/i);
   const isPDF = fileName.match(/\.pdf$/i);
   const FileIcon = isImage ? FileImage : isPDF ? FileText : Paperclip;
+
+  const getReadStatus = () => {
+    if (!recipients || recipients.length === 0) {
+      return 'sent';
+    }
+    const allRead = recipients.every((r) => r.is_read);
+    return allRead ? 'read' : 'delivered';
+  };
+
+  const renderCheckmarks = () => {
+    if (!isOwnMessage) return null;
+    const status = getReadStatus();
+    if (status === 'sent') {
+      return <Check className="h-3 w-3 text-[#afafaf]" />;
+    }
+    if (status === 'delivered') {
+      return <CheckCheck className="h-3 w-3 text-[#afafaf]" />;
+    }
+    return <CheckCheck className="h-3 w-3 text-white" />;
+  };
 
   return (
     <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-3 px-2 sm:px-0`}>
@@ -256,14 +301,15 @@ export default function MessageBubble({ message, currentUser, users, room }: Mes
           </div>
         )}
 
-        {/* Timestamp */}
-        <div className={`border-t px-3 pb-2 pt-1 ${isOwnMessage ? 'border-white/10' : 'border-black/5'}`}>
+        {/* Timestamp + Read Status */}
+        <div className={`flex items-center justify-between border-t px-3 pb-2 pt-1 ${isOwnMessage ? 'border-white/10' : 'border-black/5'}`}>
           <div className={`text-xs ${isOwnMessage ? 'text-[#afafaf]' : 'text-[#5e5e5e]'}`}>
             {new Date(message.created_at).toLocaleTimeString([], { 
               hour: '2-digit', 
               minute: '2-digit' 
             })}
           </div>
+          {renderCheckmarks()}
         </div>
       </div>
     </div>
