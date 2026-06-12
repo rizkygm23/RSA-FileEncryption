@@ -64,3 +64,15 @@ export interface MessageRecipient {
   is_read: boolean;
   read_at?: string;
 }
+
+export interface DocumentSignature {
+  id: string;
+  signer_name: string;
+  reason: string;
+  signed_date: string;
+  filename: string;
+  doc_hash: string;
+  signature: string;
+  public_key: string;
+  created_at: string;
+}

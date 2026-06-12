@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import UploadBox from '@/components/UploadBox';
+import KeyField from '@/components/KeyField';
 import ProcessLogs from '@/components/ProcessLogs';
 import { signFile } from '@/services/api';
 import { PenTool } from 'lucide-react';
@@ -78,7 +79,7 @@ export default function SignOp() {
           <label className="mb-2 block text-sm font-medium text-[#5e5e5e]">
             Private key
           </label>
-          <UploadBox onFileSelect={setKeyFile} label="Private Key (.txt)" selectedFile={keyFile} />
+          <KeyField type="private" onFileSelect={setKeyFile} selectedFile={keyFile} />
         </div>
       </div>
 

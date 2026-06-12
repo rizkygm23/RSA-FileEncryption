@@ -5,6 +5,8 @@ import type { ComponentType } from 'react';
 import Link from 'next/link';
 import {
   FileCheck,
+  FileSignature,
+  KeyRound,
   Lock,
   MessageSquareShare,
   PenTool,
@@ -15,8 +17,9 @@ import EncryptOp from '@/components/operations/EncryptOp';
 import DecryptOp from '@/components/operations/DecryptOp';
 import SignOp from '@/components/operations/SignOp';
 import VerifyOp from '@/components/operations/VerifyOp';
+import KeyManager from '@/components/KeyManager';
 
-type Tab = 'encrypt' | 'decrypt' | 'sign' | 'verify';
+type Tab = 'encrypt' | 'decrypt' | 'sign' | 'verify' | 'keys';
 
 const operationTabs: {
   id: Tab;
@@ -47,6 +50,12 @@ const operationTabs: {
     label: 'Verify',
     description: 'Check a file signature',
     icon: FileCheck,
+  },
+  {
+    id: 'keys',
+    label: 'Keys',
+    description: 'Generate, download, or save keys',
+    icon: KeyRound,
   },
 ];
 
@@ -92,6 +101,17 @@ export default function Dashboard() {
           })}
 
           <div className="mt-6 px-3 text-sm font-medium text-[#5e5e5e]">Comms</div>
+
+          <Link
+            href="/documents"
+            className="flex min-h-14 items-center gap-3 rounded-lg px-3 text-sm text-[#5e5e5e] transition-colors hover:bg-[#f3f3f3] hover:text-black"
+          >
+            <FileSignature className="h-4 w-4 shrink-0" />
+            <span>
+              <span className="block font-medium">Documents</span>
+              <span className="block text-xs text-[#5e5e5e]">Sign &amp; verify PDF letters</span>
+            </span>
+          </Link>
 
           <Link
             href="/chat"
@@ -177,6 +197,7 @@ export default function Dashboard() {
                 {activeTab === 'decrypt' && <DecryptOp />}
                 {activeTab === 'sign' && <SignOp />}
                 {activeTab === 'verify' && <VerifyOp />}
+                {activeTab === 'keys' && <KeyManager />}
               </div>
             </section>
           </div>

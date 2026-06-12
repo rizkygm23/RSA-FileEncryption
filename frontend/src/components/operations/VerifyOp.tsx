@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import UploadBox from '@/components/UploadBox';
+import KeyField from '@/components/KeyField';
 import ResultCard from '@/components/ResultCard';
 import ProcessLogs from '@/components/ProcessLogs';
 import { verifySignature } from '@/services/api';
@@ -80,7 +81,7 @@ export default function VerifyOp() {
           <label className="mb-2 block text-sm font-medium text-[#5e5e5e]">
             Public key
           </label>
-          <UploadBox onFileSelect={setKeyFile} label="Public Key (.txt)" selectedFile={keyFile} />
+          <KeyField type="public" onFileSelect={setKeyFile} selectedFile={keyFile} />
         </div>
 
         <div>
